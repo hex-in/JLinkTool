@@ -4,6 +4,7 @@
 # Author:   Heyn (heyunhuan@gmail.com)
 # Program:  JLink tool (GUI).
 # History:  2019-05-29 Ver:0.1 [Heyn] Initialization
+#           2019-06-21 Ver:0.2 [Heyn] Bugfixed: exception exit
 
 import time
 import threading
@@ -36,8 +37,8 @@ class hexinJLinkTool( Ui_MainWindow, QMainWindow ):
         self.setupUi( self )
         self.setWindowTitle( 'JLinkTool {}'.format( __version__ ) )
         self.setWindowIcon( QIcon(':/icons/hexin.png') )
+        self.lineEditStartAddress.setText('0')
         # Init
-        
         self.__init_poll_jlink_timer( 2000 )
         self.__intelHexFilePath, self.__intelHexFile = None, None
 
@@ -55,8 +56,8 @@ class hexinJLinkTool( Ui_MainWindow, QMainWindow ):
 
     def __init_poll_jlink_timer( self, ms=1000 ):
         try:
-            self.__jlinkDevice = hexinJLink( )
-            jlink = self.__jlinkDevice.scan()
+            jlinkDevice = hexinJLink( )
+            jlink = jlinkDevice.scan()
         except BaseException as err:
             self.statusBar().showMessage( '[错误] 加载JLink驱动失败...{}'.format( err ) )
             return
@@ -71,7 +72,8 @@ class hexinJLinkTool( Ui_MainWindow, QMainWindow ):
         self.poolJLinkTimer.timeout.connect( self.pollJLinkSlot )
 
     def pollJLinkSlot( self ):
-        jlink = self.__jlinkDevice.scan()
+        jlinkDevice = hexinJLink( ) # Bugfixed: 2019-06-21 exception exit
+        jlink = jlinkDevice.scan()
         items = [ self.comboBoxJLinkSN.itemText( i ) for i in range( self.comboBoxJLinkSN.count() ) ]
         
         if ( len( jlink ) == 0 ):
@@ -84,8 +86,6 @@ class hexinJLinkTool( Ui_MainWindow, QMainWindow ):
             self.comboBoxJLinkSN.addItems( jlink )
             self.pushButtonStart.setDisabled( False )
             self.statusBar().showMessage( '' )
-
-
 
     @pyqtSlot()
     def on_actionImport_triggered( self ):
